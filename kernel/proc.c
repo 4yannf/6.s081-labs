@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "sysinfo.h"
 
 struct cpu cpus[NCPU];
 
@@ -13,6 +14,7 @@ struct proc proc[NPROC];
 struct proc *initproc;
 
 int nextpid = 1;
+
 struct spinlock pid_lock;
 
 extern void forkret(void);
@@ -311,6 +313,9 @@ fork(void)
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
+
+  // copy trace mask
+  np->trace = p->trace;
 
   release(&np->lock);
 
@@ -680,4 +685,13 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+void knproc(struct sysinfo* info){
+  struct proc *p;
+  int cnt = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED) ++cnt; 
+  }
+  info->nproc = cnt;
 }

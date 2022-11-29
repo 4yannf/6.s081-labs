@@ -8,6 +8,9 @@
 #include "spinlock.h"
 #include "riscv.h"
 #include "defs.h"
+#include "sysinfo.h"
+
+static uint64 freemem = 0xffffffffffffffff;
 
 void freerange(void *pa_start, void *pa_end);
 
@@ -54,11 +57,14 @@ kfree(void *pa)
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
+  
+
   r = (struct run*)pa;
 
   acquire(&kmem.lock);
   r->next = kmem.freelist;
   kmem.freelist = r;
+  freemem += PGSIZE;
   release(&kmem.lock);
 }
 
@@ -72,11 +78,21 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r){
     kmem.freelist = r->next;
+    freemem -= PGSIZE;
+  }
   release(&kmem.lock);
 
-  if(r)
+  if(r){
     memset((char*)r, 5, PGSIZE); // fill with junk
+  }
   return (void*)r;
+}
+
+
+void kfreemem(struct sysinfo* info){
+  
+  info->freemem = freemem + 1;
+  
 }
