@@ -2,6 +2,9 @@
 
 MIT 6.s081 labs
 
+** if "$ make qemu" failed, "$ make clean" before "make qemu"**
+
+
 finished:
 util
 syscall
